@@ -133,7 +133,7 @@ def get_trtllm_mnnvl_comm_module():
 
 
 def get_allreduce_mnnvl_workspace(
-    mapping: Mapping, dtype: torch.dtype
+    mapping: Mapping, dtype: torch.dtype, target_workspace_size_bytes: int = 12_000_000
 ) -> Tuple[McastGPUBuffer, torch.Tensor, int]:
     """Get workspace buffers needed for multi-node NVLink all-reduce operation.
 
@@ -149,6 +149,7 @@ def get_allreduce_mnnvl_workspace(
     Args:
         mapping: Tensor parallel mapping configuration containing rank info
         dtype: Data type of the tensors being reduced
+        target_workspace_size_bytes: Target size of the workspace buffer in bytes
 
     Returns:
         Tuple containing:
@@ -163,9 +164,8 @@ def get_allreduce_mnnvl_workspace(
     # LCM for hidden_dim: 2048, 4096, 5120, 7168, 8192 = 286720
     # max_num_elements must be a multiple of 286720
     lcm_hidden_dim = 286720
-    TARGET_WORKSPACE_SIZE_BYTES = 12_000_000
     buffer_size_in_bytes = math.ceil(
-        TARGET_WORKSPACE_SIZE_BYTES / (lcm_hidden_dim * stride)
+        target_workspace_size_bytes / (lcm_hidden_dim * stride)
     ) * (lcm_hidden_dim * stride)
     max_num_elements = buffer_size_in_bytes // stride
 
